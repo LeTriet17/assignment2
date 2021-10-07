@@ -37,13 +37,13 @@ private:
     int block;
     T_Node *right_rotate(T_Node *root);
     T_Node *left_rotate(T_Node *root);
-    void BT_Insert(T_Node *&root, T_Node *node);
-    void Delete(T_Node *&root, string name);
+    void BT_Insert(T_Node *&root, T_Node *node,string &line);
+    void Delete(T_Node *&root, int block);
     T_Node* splay(T_Node *root, string &name);
-    void Insert(T_Node *&root, T_Node *node);
+    void Insert(T_Node *&root, T_Node *node,string &line);
     void Assign(); // not decalare param yet
     void preOrder(T_Node *root);
-
+    void block_detect();
 public:
     SymbolTable();
     void run(string filename);
