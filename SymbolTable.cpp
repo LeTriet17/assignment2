@@ -140,7 +140,7 @@ void SymbolTable::Insert(T_Node *&t, T_Node *node, string &line)
     if (root)
     {
         if (root->id_name.compare(node->id_name) == 0 && root->scope == node->scope)
-            throw InvalidDeclaration(line);
+            throw Redeclared(line);
         root = splay(root, node->id_name);
         if (root->id_name.compare(node->id_name) == 1)
         {
