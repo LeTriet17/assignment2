@@ -37,7 +37,7 @@ void SymbolTable::run(string filename)
                     throw InvalidDeclaration(line);
                 smatch s;
                 if (regex_search(func, s, regex("(number|string)$")))
-                    node = new T_Node(name, block, s[0].str());
+                    node = new T_Node(name, block, s.str(0));
                 string list_param(&func[1], &func[func.find_last_of(")")]);
                 delim = (",");
                 sregex_token_iterator param(list_param.begin(), list_param.end(), delim, -1);
@@ -52,89 +52,101 @@ void SymbolTable::run(string filename)
             else
                 throw InvalidInstruction(line);
             Insert(node, line);
-            if (seq->head == NULL || (*seq->head->node)->scope == block)
+            if (seq->head == NULL || (seq->head->node)->scope == block)
                 seq->add_next(node);
-            else if ((*seq->head->node)->scope != block)
+            else
                 seq->add_first(node);
         }
-        else if (regex_search(line, regex("^ASSIGN")))
+        else if (regex_match(line, regex("ASSIGN [a-z]\\w* ([0-9]+|'[a-zA-Z0-9\\s]+')")))
         {
-            if (regex_match(line, regex("ASSIGN [a-z]\\w* ([0-9]+|'[a-zA-Z0-9\\s]+')")))
+            smatch match;
+            if (regex_search(line, match, regex("[a-z]\\w*")))
             {
-                smatch match;
-                regex name("[a-z]\\w*");
-                regex string_type("'[a-zA-Z0-9\\s]+'");
-                regex num_type("[0-9]+");
-                if (regex_search(line, match, name))
-                {
-                    string name = match[0];
-                    T_Node *node = new T_Node(name, block);
-                    root = splay(root, node);
-                    if ((root->type.compare("string") && !regex_search(line, string_type)) || (root->type.compare("number") && !regex_search(line, num_type)))
-                        throw TypeMismatch(line);
-                    if (!root->id_name.compare(name))
-                        throw Undeclared(line);
-                }
-            }
-            else if (regex_match(line, regex("ASSIGN [a-z]\\w* [a-z]\\w*")))
-            {
-                // regex name("[a-z]\\w*");
-                // sregex_iterator name_iden(line.begin(), line.end(), name);
-                // smatch name = *name_iden;
-            }
-            else if (regex_match(line, regex("ASSIGN [a-z]\\w* [a-z]\\w*\\((([0-9]+|'[a-zA-Z0-9\\s]+')(,[0-9]+|,'[a-zA-Z0-9\\s]+')*)?\\)")))
-            {
-                regex name("[a-z]\\w*");
-                string name_func(&line[line.find_first_not_of("ASSIGN ")], &line[line.find_first_of("(")]);
-                string iden_name(&name_func[0], &name_func[name_func.find_first_of(" ")]);
-                string func_name(&name_func[iden_name.length()] + 1, &name_func[name_func.length()]);
-                T_Node *func_node = new T_Node(func_name, block);
-                if (!contains(func_node))
-                    throw Undeclared(line);
-                func_node->type = root->type;
-                if (!root->func_param)
+                T_Node *node = new T_Node(match.str(0), block);
+                root = splay(root, node);
+                if ((root->type.compare("string") == 0 && !regex_search(line, regex("'[a-zA-Z0-9\\s]+'"))) || (root->type.compare("number") == 0 && !regex_search(line, regex("[0-9]+"))))
                     throw TypeMismatch(line);
-                string param(&line[line.find_first_of("(") + 1], &line[line.find_last_of(")")]);
-                regex delim(",");
-                sregex_token_iterator param_token(param.begin(), param.end(), delim, -1);
-                std::sregex_token_iterator end;
-                SymbolTable::T_Node::LL_Param::LL_Node *curr = root->func_param->get_head();
-                while (param_token != end)
-                {
-                    string type = *(param_token);
-                    if ((curr->type.compare("string") == 0 && !regex_match(type, regex("'[a-zA-Z0-9\\s]+'"))) || (curr->type.compare("number") == 0 && !regex_match(type, regex("[0-9]+"))))
-                        throw TypeMismatch(line);
-                    curr = curr->next;
-                    param_token++;
-                }
-                T_Node *iden_node = new T_Node(func_name, block);
-                if (!contains(iden_node))
+                if (!root->id_name.compare(match.str(0)))
                     throw Undeclared(line);
-                iden_node->type = root->type;
-                if (!func_node->type.compare(iden_node->type))
-                    throw TypeMismatch(line);
             }
-            else
-                throw InvalidInstruction(line);
         }
-        else if (regex_search(line, regex("^BEGIN")))
+        else if (regex_match(line, regex("ASSIGN [a-z]\\w* [a-z]\\w*")))
+        {
+            regex name_regex(("[a-z]\\w*"));
+            string name[2];
+            int i = 0;
+            for (sregex_iterator it = sregex_iterator(line.begin(), line.end(), name_regex); it != sregex_iterator(); it++, i++)
+            {
+                smatch match = *it;
+                name[i] = match.str();
+            }
+            T_Node *val_node = seq->findNode(name[1]);
+            T_Node *name_node = seq->findNode(name[0]);
+            if (!val_node || !name_node) throw Undeclared(line);
+            if (val_node->type.compare(name_node->type)) throw TypeMismatch(line);
+        }
+        else if (regex_match(line, regex("ASSIGN [a-z]\\w* [a-z]\\w*\\((([0-9]+|'[a-zA-Z0-9\\s]+')(,[0-9]+|,'[a-zA-Z0-9\\s]+')*)?\\)")))
+        {
+            string name_func(&line[line.find_first_not_of("ASSIGN ")], &line[line.find_first_of("(")]);
+            string iden_name(&name_func[0], &name_func[name_func.find_first_of(" ")]);
+            string func_name(&name_func[iden_name.length()] + 1, &name_func[name_func.length()]);
+            T_Node *func_node = new T_Node(func_name, block);
+            if (!contains(func_node))
+                throw Undeclared(line);
+            func_node->type = root->type;
+            if (!root->func_param)
+                throw TypeMismatch(line);
+            string param(&line[line.find_first_of("(") + 1], &line[line.find_last_of(")")]);
+            regex delim(",");
+            sregex_token_iterator param_token(param.begin(), param.end(), delim, -1);
+            std::sregex_token_iterator end;
+            SymbolTable::T_Node::LL_Param::LL_Node *curr = root->func_param->get_head();
+            while (param_token != end)
+            {
+                string type = *(param_token++);
+                if ((curr->type.compare("string") == 0 && !regex_match(type, regex("'[a-zA-Z0-9\\s]+'"))) || (curr->type.compare("number") == 0 && !regex_match(type, regex("[0-9]+"))))
+                    throw TypeMismatch(line);
+                curr = curr->next;
+            }
+            T_Node *iden_node = new T_Node(func_name, block);
+            if (!contains(iden_node))
+                throw Undeclared(line);
+            iden_node->type = root->type;
+            if (!func_node->type.compare(iden_node->type))
+                throw TypeMismatch(line);
+        }
+        else if (regex_match(line, regex("BEGIN")))
         {
             block++;
         }
-        else if (regex_search(line, regex("^END")))
+        else if (regex_match(line, regex("END")))
         {
             if (block == 0)
                 throw UnknownBlock();
-            while ((*seq->head->node)->scope == block)
+            while ((seq->head->node)->scope == block)
             {
-                T_Node *rm_node = *seq->head->node;
+                T_Node *rm_node = seq->head->node;
                 seq->remove_head();
                 remove(rm_node);
             }
             block--;
         }
-        else if (regex_search(line, regex("^PRINT")))
+        else if (regex_match(line, regex("LOOKUP [a-z]\\w*")))
         {
+            string name(&line[line.find_first_of(" ") + 1], &line[line.size()]);
+            T_Node *node = seq->findNode(name);
+            if (node)
+            {
+                root = splay(root, node);
+                cout << root->id_name << "//" << root->scope << endl;
+            }
+            else
+                throw Undeclared(line);
+        }
+        else if (regex_match(line, regex("PRINT")))
+        {
+            preOrder(root);
+            cout << endl;
         }
         else
             throw InvalidInstruction(line);
