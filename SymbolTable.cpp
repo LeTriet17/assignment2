@@ -22,8 +22,7 @@ void SymbolTable::run(string filename)
                 regex delim("\\s");
                 sregex_token_iterator li_token(line.begin(), line.end(), delim, -1);
                 node = new T_Node(*(++li_token), block, *(++li_token));
-                string stas = *(++li_token);
-                if (stas.compare("true") == 0 && block != 0)
+                if ((++li_token)->compare("true") == 0 && block != 0)
                     throw InvalidDeclaration(line);
             }
             else if (regex_match(line, regex("INSERT [a-z]\\w* \\(((number|string)(,number|,string)*)?\\)->(number|string) (true|false)")))
@@ -32,21 +31,15 @@ void SymbolTable::run(string filename)
                 sregex_token_iterator li_token(line.begin(), line.end(), delim, -1);
                 string name = *(++li_token);
                 string func = *(++li_token);
-                string stas = *(++li_token);
-                if (stas.compare("false") == 0 || block != 0)
+                if ((++li_token)->compare("false") == 0 || block != 0)
                     throw InvalidDeclaration(line);
-                smatch s;
-                if (regex_search(func, s, regex("(number|string)$")))
-                    node = new T_Node(name, block, s.str(0));
-                string list_param(&func[1], &func[func.find_last_of(")")]);
-                delim = (",");
-                sregex_token_iterator param(list_param.begin(), list_param.end(), delim, -1);
-                std::sregex_token_iterator end;
+                string type(line[line.find_first_not_of("->")], line[line.size()]);
+                node = new T_Node(name, block, type);
                 node->func_param = new SymbolTable::T_Node::LL_Param;
-                while (param != end)
+                regex func_regex("(number|string)");
+                for (sregex_iterator it = sregex_iterator(func.begin(), func.end() - 8, func_regex); it != sregex_iterator(); it++)
                 {
-                    string param_type = (*(param++));
-                    node->func_param->add(param_type);
+                    node->func_param->add(it->str());
                 }
             }
             else
@@ -76,14 +69,11 @@ void SymbolTable::run(string filename)
             string name[2];
             int i = 0;
             for (sregex_iterator it = sregex_iterator(line.begin(), line.end(), name_regex); it != sregex_iterator(); it++, i++)
-            {
-                smatch match = *it;
-                name[i] = match.str();
-            }
-            T_Node *val_node = seq->findNode(name[1]);
-            T_Node *name_node = seq->findNode(name[0]);
-            if (!val_node || !name_node) throw Undeclared(line);
-            if (val_node->type.compare(name_node->type)) throw TypeMismatch(line);
+                name[i] = it->str();
+            if (!seq->findNode(name[1]) || !seq->findNode(name[0]))
+                throw Undeclared(line);
+            if (seq->findNode(name[1])->type.compare(seq->findNode(name[0])->type))
+                throw TypeMismatch(line);
         }
         else if (regex_match(line, regex("ASSIGN [a-z]\\w* [a-z]\\w*\\((([0-9]+|'[a-zA-Z0-9\\s]+')(,[0-9]+|,'[a-zA-Z0-9\\s]+')*)?\\)")))
         {
@@ -97,18 +87,15 @@ void SymbolTable::run(string filename)
             if (!root->func_param)
                 throw TypeMismatch(line);
             string param(&line[line.find_first_of("(") + 1], &line[line.find_last_of(")")]);
-            regex delim(",");
-            sregex_token_iterator param_token(param.begin(), param.end(), delim, -1);
-            std::sregex_token_iterator end;
+            regex func_regex("([0-9]+|'[a-zA-Z0-9\\s]+')");
             SymbolTable::T_Node::LL_Param::LL_Node *curr = root->func_param->get_head();
-            while (param_token != end)
+            for (sregex_iterator it = sregex_iterator(param.begin(), param.end(), func_regex); it != sregex_iterator(); it++)
             {
-                string type = *(param_token++);
-                if ((curr->type.compare("string") == 0 && !regex_match(type, regex("'[a-zA-Z0-9\\s]+'"))) || (curr->type.compare("number") == 0 && !regex_match(type, regex("[0-9]+"))))
+                if ((curr->type.compare("string") == 0 && !regex_match(it->str(), regex("'[a-zA-Z0-9\\s]+'"))) || (curr->type.compare("number") == 0 && !regex_match(it->str(), regex("[0-9]+"))))
                     throw TypeMismatch(line);
                 curr = curr->next;
             }
-            T_Node *iden_node = new T_Node(func_name, block);
+            T_Node *iden_node = new T_Node(iden_name, block);
             if (!contains(iden_node))
                 throw Undeclared(line);
             iden_node->type = root->type;
@@ -116,9 +103,7 @@ void SymbolTable::run(string filename)
                 throw TypeMismatch(line);
         }
         else if (regex_match(line, regex("BEGIN")))
-        {
             block++;
-        }
         else if (regex_match(line, regex("END")))
         {
             if (block == 0)
@@ -189,8 +174,7 @@ SymbolTable::T_Node *SymbolTable::splay(T_Node *&t, T_Node *&node)
                 t = right_rotate(t);
             if (!t->left)
                 break;
-            Right_Tree_Min->left = t;
-            Right_Tree_Min = t;
+            Right_Tree_Min = Right_Tree_Min->left = t;
             t = t->left;
         }
         else if (*t < node)
@@ -199,8 +183,7 @@ SymbolTable::T_Node *SymbolTable::splay(T_Node *&t, T_Node *&node)
                 t = left_rotate(t);
             if (!t->right)
                 break;
-            Left_Tree_Max->right = t;
-            Left_Tree_Max = t;
+            Left_Tree_Max = Left_Tree_Max->right = t;
             t = t->right;
         }
         else
@@ -233,20 +216,12 @@ void SymbolTable::Insert(T_Node *node, string &line)
     }
     root = node;
 }
-SymbolTable::T_Node *SymbolTable::search(T_Node *&node)
-{
-    return splay(root, node);
-}
 bool SymbolTable::contains(T_Node *&node)
 {
-    if (isEmpty())
+    if (!root)
         return false;
     root = splay(root, node);
     return *root == node;
-}
-bool SymbolTable::isEmpty()
-{
-    return root == NULL;
 }
 void SymbolTable::remove(T_Node *&node)
 {

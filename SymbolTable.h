@@ -110,7 +110,6 @@ private:
     T_Node *right_rotate(T_Node *root);
     T_Node *left_rotate(T_Node *root);
     T_Node *splay(T_Node *&root, T_Node *&node);
-    T_Node *search(T_Node *&node);
     void Insert(T_Node *node, string &line);
     void Assign(); // not decalare param yet
     void preOrder(T_Node *root)
@@ -124,9 +123,7 @@ private:
     }
     void block_detect();
     bool contains(T_Node *&node);
-    bool isEmpty();
     void remove(T_Node *&node);
-
 public:
     SymbolTable();
     void run(string filename);
