@@ -80,12 +80,14 @@ void SymbolTable::run(string filename)
             string name_func(&line[line.find_first_not_of("ASSIGN ")], &line[line.find_first_of("(")]);
             string iden_name(&name_func[0], &name_func[name_func.find_first_of(" ")]);
             string func_name(&name_func[iden_name.length()] + 1, &name_func[name_func.length()]);
-            T_Node *func_node = new T_Node(func_name, block);
-            if (!contains(func_node))
-                throw Undeclared(line);
-            func_node->type = root->type;
-            if (!root->func_param)
+            T_Node *func_node = seq->findNode(func_name);
+            if (func_node)
+            {
+                root = splay(root, func_node);
+                if (!root->func_param)
                 throw TypeMismatch(line);
+            }
+            else throw Undeclared(line);
             string param(&line[line.find_first_of("(") + 1], &line[line.find_last_of(")")]);
             regex func_regex("([0-9]+|'[a-zA-Z0-9\\s]+')");
             SymbolTable::T_Node::LL_Param::LL_Node *curr = root->func_param->get_head();
@@ -95,12 +97,15 @@ void SymbolTable::run(string filename)
                     throw TypeMismatch(line);
                 curr = curr->next;
             }
-            T_Node *iden_node = new T_Node(iden_name, block);
-            if (!contains(iden_node))
+            T_Node *iden_node = seq->findNode(iden_name);
+            if (iden_node)
+            {
+                root = splay(root, iden_node);
+                if (!func_node->type.compare(iden_node->type)||root->func_param)
+                    throw TypeMismatch(line);
+            }
+            else
                 throw Undeclared(line);
-            iden_node->type = root->type;
-            if (!func_node->type.compare(iden_node->type))
-                throw TypeMismatch(line);
         }
         else if (regex_match(line, regex("BEGIN")))
             block++;
@@ -216,17 +221,10 @@ void SymbolTable::Insert(T_Node *node, string &line)
     }
     root = node;
 }
-bool SymbolTable::contains(T_Node *&node)
-{
-    if (!root)
-        return false;
-    root = splay(root, node);
-    return *root == node;
-}
 void SymbolTable::remove(T_Node *&node)
 {
     T_Node *new_Tree;
-    if (!contains(node))
+    if (!root)
         return;
     if (root->left)
     {
