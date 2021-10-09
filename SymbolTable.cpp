@@ -1,13 +1,4 @@
 #include "SymbolTable.h"
-SymbolTable::T_Node::LL_Param::LL_Node::LL_Node() : type("Unknow"), next(NULL) {}
-SymbolTable::T_Node::LL_Param::LL_Node::LL_Node(string type, LL_Node *next) : type(type), next(next) {}
-SymbolTable::T_Node::LL_Param::LL_Param() : head(NULL), tail(NULL) {}
-SymbolTable::T_Node::T_Node() : id_name("Unknown"), type("Unknown"), scope(-1), left(NULL), right(NULL), func_param(NULL) {}
-SymbolTable::T_Node::T_Node(string id_name, int scope, string type) : id_name(id_name), scope(scope), type(type), left(NULL), right(NULL), func_param(NULL) {}
-SymbolTable::SymbolTable() : root(NULL), block(0)
-{
-    seq = new Sequence;
-}
 void SymbolTable::run(string filename)
 {
     ifstream infile(filename);

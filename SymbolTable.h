@@ -18,13 +18,13 @@ private:
             public:
                 string type;
                 LL_Node *next;
-                LL_Node();
-                LL_Node(string type, LL_Node *next = NULL);
+                LL_Node() : type("Unknow"), next(NULL) {}
+                LL_Node(string type, LL_Node *next = NULL) : type(type), next(next) {}
             };
             LL_Node *head, *tail;
 
         public:
-            LL_Param();
+            LL_Param() : head(NULL), tail(NULL) {}
             void add(string type);
             LL_Node *get_head()
             {
@@ -39,8 +39,8 @@ private:
         int scope;
         T_Node *left, *right;
         LL_Param *func_param;
-        T_Node();
-        T_Node(string id_name, int scope, string type = "Unknow");
+        T_Node() : id_name("Unknown"), type("Unknown"), scope(-1), left(NULL), right(NULL), func_param(NULL) {}
+        T_Node(string id_name, int scope, string type = "Unknow") : id_name(id_name), scope(scope), type(type), left(NULL), right(NULL), func_param(NULL) {}
         bool operator==(T_Node *&node)
         {
             return (this->scope == node->scope && this->id_name.compare(node->id_name) == 0);
@@ -58,7 +58,6 @@ private:
     {
     private:
         friend class SymbolTable;
-
         struct Q_Node
         {
             T_Node *node;
@@ -95,7 +94,7 @@ private:
         }
         T_Node *findNode(string &name)
         {
-            Q_Node* curr = head;
+            Q_Node *curr = head;
             while (curr)
                 if ((curr->node)->id_name.compare(name) == 0)
                     return curr->node;
@@ -125,7 +124,10 @@ private:
     bool contains(T_Node *&node);
     void remove(T_Node *&node);
 public:
-    SymbolTable();
+    SymbolTable() : root(NULL), block(0)
+    {
+        seq = new Sequence;
+    }
     void run(string filename);
 };
 #endif
