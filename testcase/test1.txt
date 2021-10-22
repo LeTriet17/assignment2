@@ -1,0 +1,5 @@
+INSERT a20 number false
+INSERT a50 (number,number)->number false
+PRINT
+INSERT a30 number false
+PRINT

@@ -37,10 +37,10 @@ private:
     public:
         string id_name, type;
         int scope;
-        T_Node *left, *right;
+        T_Node *left, *right,*parent;
         LL_Param *func_param;
-        T_Node() : id_name("Unknown"), type("Unknown"), scope(-1), left(NULL), right(NULL), func_param(NULL) {}
-        T_Node(string id_name, int scope, string type = "Unknow") : id_name(id_name), scope(scope), type(type), left(NULL), right(NULL), func_param(NULL) {}
+        T_Node() : id_name("Unknown"), type("Unknown"), scope(-1), left(NULL), right(NULL),parent(NULL), func_param(NULL) {}
+        T_Node(string id_name, int scope, string type = "Unknow") : id_name(id_name), scope(scope), type(type), left(NULL), right(NULL),parent(NULL), func_param(NULL) {}
         bool operator==(T_Node *&node)
         {
             return (this->scope == node->scope && this->id_name.compare(node->id_name) == 0);
@@ -88,9 +88,17 @@ private:
         }
         void remove_head()
         {
-            Q_Node *tmp = head;
-            head = head->next;
-            delete tmp;
+            if (head->next == NULL)
+            {
+                delete head;
+                head = tail = NULL;
+            }
+            else
+            {
+                Q_Node *tmp = head;
+                head = head->next;
+                delete tmp;
+            }
         }
         T_Node *findNode(string &name)
         {
@@ -106,10 +114,10 @@ private:
     T_Node *root;
     Sequence *seq;
     int block;
-    T_Node *right_rotate(T_Node *root);
-    T_Node *left_rotate(T_Node *root);
-    T_Node *splay(T_Node *&root, T_Node *&node);
-    void Insert(T_Node *node, string &line);
+    void rightRotate(T_Node *);
+    void leftRotate(T_Node *);
+    void splay(T_Node *);
+    int Insert(T_Node *);
     void Assign(); // not decalare param yet
     void preOrder(T_Node *root)
     {
@@ -121,8 +129,10 @@ private:
         }
     }
     void block_detect();
-    bool contains(T_Node *&node);
-    void remove(T_Node *&node);
+    bool contains(T_Node *&);
+    void remove(T_Node *);
+    int num_com(T_Node* node);
+    int num_splay(T_Node *node);
 public:
     SymbolTable() : root(NULL), block(0)
     {
