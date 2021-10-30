@@ -13,8 +13,8 @@ void SymbolTable::run(string filename)
             {
                 sregex_token_iterator li_token(line.begin(), line.end(), delim, -1);
                 node = new T_Node(*(++li_token), block, *(++li_token));
-                if ((++li_token)->compare("true") == 0 && block != 0)
-                    throw InvalidDeclaration(line);
+                if ((++li_token)->compare("true") == 0)
+                    node->scope = 0;
             }
             else if (regex_match(line, regex("INSERT [a-z]\\w* \\(((number|string)(,number|,string)*)?\\)->(number|string) (true|false)")))
             {
@@ -22,10 +22,10 @@ void SymbolTable::run(string filename)
                 sregex_token_iterator li_token(line.begin(), line.end(), delim, -1);
                 string name = *(++li_token);
                 string func = *(++li_token);
-                if ((++li_token)->compare("true") == 0 && block != 0)
+                if ((++li_token)->compare("true") == 0)
                     throw InvalidDeclaration(line);
                 string type(line[line.find_first_not_of("->")], line[line.size()]);
-                node = new T_Node(name, block, type);
+                node = new T_Node(name, 0, type);
                 node->func_param = new SymbolTable::T_Node::LL_Param;
                 regex func_regex("(number|string)");
                 for (sregex_iterator it = sregex_iterator(func.begin(), func.end() - 8, func_regex); it != sregex_iterator(); it++)
