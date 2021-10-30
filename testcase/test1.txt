@@ -1,5 +1,28 @@
-INSERT a20 number false
-INSERT a50 (number,number)->number false
+BEGIN
+BEGIN
+INSERT a20 number true
+END
+INSERT a30 string false
+BEGIN
+INSERT a10 (number,number)->number true
+INSERT a30 string false
+INSERT a40 (string,string)->number true
+LOOKUP a20
+ASSIGN a20 a40(1235,'a30')
 PRINT
-INSERT a30 number false
+INSERT a160 number false
+INSERT a190 number false
+PRINT
+BEGIN
+INSERT a220 number false
+INSERT a210 number false
+PRINT
+INSERT a280 number false
+INSERT a260 number false
+PRINT
+END
+PRINT
+END
+PRINT
+END
 PRINT

@@ -1,9 +1,3 @@
-INSERT x number false
-INSERT y string false
-BEGIN
-INSERT x number false
-BEGIN
-INSERT z string true
-PRINT
-END
-END
+INSERT func ()->number false
+INSERT x string false
+ASSIGN x func()

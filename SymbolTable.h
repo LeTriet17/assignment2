@@ -35,12 +35,14 @@ private:
         friend class SymbolTable;
 
     public:
-        string id_name, type;
+        string id_name;
         int scope;
-        T_Node *left, *right,*parent;
+        string type;
+        bool nstatic;
+        T_Node *left, *right, *parent;
         LL_Param *func_param;
-        T_Node() : id_name("Unknown"), type("Unknown"), scope(-1), left(NULL), right(NULL),parent(NULL), func_param(NULL) {}
-        T_Node(string id_name, int scope, string type = "Unknow") : id_name(id_name), scope(scope), type(type), left(NULL), right(NULL),parent(NULL), func_param(NULL) {}
+        T_Node() : id_name("Unknown"), scope(-1), type("Unknown"), nstatic(false), left(NULL), right(NULL), parent(NULL), func_param(NULL) {}
+        T_Node(string id_name, int scope, string type = "Unknow",bool nstatic = false) : id_name(id_name), scope(scope), type(type), nstatic(nstatic), left(NULL), right(NULL), parent(NULL), func_param(NULL) {}
         bool operator==(T_Node *&node)
         {
             return (this->scope == node->scope && this->id_name.compare(node->id_name) == 0);
@@ -64,11 +66,10 @@ private:
             Q_Node *next;
             Q_Node(T_Node *T_node) : node(T_node), next(NULL) {}
         };
-        Q_Node *head;
-        Q_Node *tail;
+        Q_Node *head, *tail, *t_static;
 
     public:
-        Sequence() : head(NULL) {}
+        Sequence() : head(NULL), tail(NULL), t_static(NULL) {}
         void add_first(T_Node *T_node)
         {
             Q_Node *node = new Q_Node(T_node);
@@ -77,14 +78,19 @@ private:
         }
         void add_next(T_Node *T_node)
         {
+            Q_Node *node = new Q_Node(T_node);
+            node->next = tail->next;
+            tail = tail->next = node;
+        }
+        void add_static(T_Node *T_node)
+        {
             if (head)
             {
                 Q_Node *node = new Q_Node(T_node);
-                node->next = tail->next;
-                tail = tail->next = node;
+                t_static = t_static->next = node;
             }
             else
-                head = tail = new Q_Node(T_node);
+                head = t_static = new Q_Node(T_node);
         }
         void remove_head()
         {
@@ -123,16 +129,17 @@ private:
     {
         if (root)
         {
-            cout << root->id_name << "//" << root->scope << " ";
             preOrder(root->left);
+            cout << root->id_name << "//" << root->scope << " ";
             preOrder(root->right);
         }
     }
     void block_detect();
     bool contains(T_Node *&);
     void remove(T_Node *);
-    int num_com(T_Node* node);
+    int num_com(T_Node *node);
     int num_splay(T_Node *node);
+
 public:
     SymbolTable() : root(NULL), block(0)
     {
