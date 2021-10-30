@@ -1,0 +1,8 @@
+INSERT x number false
+INSERT y string false
+BEGIN
+INSERT x number false
+INSERT z number false
+LOOKUP y
+PRINT
+END
