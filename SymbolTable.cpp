@@ -1,22 +1,3 @@
-//  _
-//                                _ooOoo_
-//                               o8888888o
-//                               88" . "88
-//                               (| -_- |)
-//                               O\  =  /O
-//                            ____/`---'\____
-//                          .'  \\|     |//  `.
-//                         /  \\|||  :  |||//  \
-//                        /  _||||| -:- |||||_  \
-//                        |   | \\\  -  /'| |   |
-//                        | \_|  `\`---'//  |_/ |
-//                        \  .-\__ `-. -'__/-.  /
-//                      ___`. .'  /--.--\  `. .'___
-//                   ."" '<  `.___\_<|>_/___.' _> \"".
-//                  | | :  `- \`. ;`. _/; .'/ /  .' ; |
-//                  \  \ `-.   \_\_`. _.'_/_/  -' _.' /
-//        ===========`-.`___`-.__\ \___  /__.-'_.'_.-'================
-//                                `=--=-'                    
 #include "SymbolTable.h"
 void SymbolTable::run(string filename)
 {
@@ -46,7 +27,7 @@ void SymbolTable::run(string filename)
             }
             else if (regex_match(line, regex("INSERT [a-z]\\w* \\(((number|string)(,number|,string)*)?\\)->(number|string) (true|false)")))
             {
-                if (check && check->scope == 0)
+                if (check)
                     throw Redeclared(line);
                 string func = *(++li_token);
                 if ((++li_token)->compare("false") == 0 && block)
@@ -194,8 +175,10 @@ void SymbolTable::run(string filename)
         }
         else if (regex_match(line, regex("PRINT")))
         {
-            preOrder(root);
-            cout << endl;
+            if (root) {
+                preOrder(root);
+                cout << endl;
+            }
         }
         else
             throw InvalidInstruction(line);

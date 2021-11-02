@@ -1,4 +1,5 @@
-BEGIN
+PRINT
+END
 BEGIN
 INSERT a20 number true
 END
@@ -8,7 +9,7 @@ INSERT a10 (number,number)->number true
 INSERT a30 string false
 INSERT a40 (string,string)->number true
 LOOKUP a20
-ASSIGN a20 a40(1235,'a30')
+ASSIGN a20 a40(a30,a30)
 PRINT
 INSERT a160 number false
 INSERT a190 number false

@@ -25,6 +25,17 @@ private:
 
         public:
             LL_Param() : head(NULL), tail(NULL) {}
+            ~LL_Param()
+            {
+                LL_Node *p = head;
+                while (p)
+                {
+                    LL_Node *q = p;
+                    p = p->next;
+                    delete q;
+                }
+                head=tail=NULL;
+            }
             void add(string type);
             LL_Node *get_head()
             {
@@ -116,6 +127,16 @@ private:
                     curr = curr->next;
             return NULL;
         }
+        ~Sequence() { 
+            Q_Node *p = head;
+            while (p)
+            {
+                Q_Node *q = p;
+                p = p->next;
+                delete q;
+            }
+            head = tail = t_static = NULL;
+        }
     };
     T_Node *root;
     Sequence *seq;
@@ -129,8 +150,8 @@ private:
     {
         if (root)
         {
-            preOrder(root->left);
             cout << root->id_name << "//" << root->scope << " ";
+            preOrder(root->left);
             preOrder(root->right);
         }
     }
@@ -146,5 +167,14 @@ public:
         seq = new Sequence;
     }
     void run(string filename);
+    ~SymbolTable()
+    {
+        while (seq->head && (seq->head->node)->scope == block)
+        {
+            T_Node *rm_node = seq->head->node;
+            seq->remove_head();
+            remove(rm_node);
+        }
+    }
 };
 #endif
